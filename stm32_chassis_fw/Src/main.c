@@ -6,44 +6,80 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                             www.st.com/SLA0044
   *
-  ******************************************************************************
-  */
+  *******************************************************************************/
+	
+	
+	
+	
+	
+
+	/*todo list:修改翻翻地盘代码，修改系统时基为TIM1而不用systick�?*/
+	//修改寻零的时候记得修�? signal.c中处理can数据的地方，里面的角度是减去
+	//模型中vesc驱动轮的线�?�度还没算上轮子的用的也是电角�??
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "adc.h"
+#include "cmsis_os.h"
 #include "can.h"
 #include "spi.h"
-#include "tim.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "CANCommute.h"
-#include "ChassisInit.h"
-#include "Calculate.h"
-#include "oled12864.h"
-#include "led.h"
-#include "nrf24l01.h"
+#include "vesc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+void SetCanFliter(void)
+{
+  CAN_FilterTypeDef  sFilterConfig;
 
+  sFilterConfig.FilterBank = 0;
+  sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
+  sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
+  sFilterConfig.FilterIdHigh = 0x0000;
+  sFilterConfig.FilterIdLow = 0x0000;
+  sFilterConfig.FilterMaskIdHigh = 0x0000;
+  sFilterConfig.FilterMaskIdLow = 0x0000;
+  sFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
+  sFilterConfig.FilterActivation = ENABLE;
+  sFilterConfig.SlaveStartFilterBank = 14;
+  
+
+	
+  if(HAL_CAN_ConfigFilter(&hcan, &sFilterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  if (HAL_CAN_Start(&hcan) != HAL_OK)
+  {
+    Error_Handler();
+  }
+	
+  if (HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
+  {
+    Error_Handler();
+  }
+	if (HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -59,23 +95,14 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint16_t pwm1=500,pwm2=0,pwm3=0,adcvalue;
-uint8_t rxbuff[32];
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
-{
-	CAN_RxHeaderTypeDef   RxHeader;
-	if(HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, CanReceiveData) != HAL_OK)
-  {
-    Error_Handler();            //错误状濁回调函敿
-  }
-  CanDataReceive(RxHeader.StdId);   //根据电机号对CAN接收进行解码
-}
+
 /* USER CODE END 0 */
 
 /**
@@ -102,76 +129,31 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-	ChassisInit();
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_TIM5_Init();
-  MX_SPI3_Init();
-  MX_ADC3_Init();
-  MX_CAN1_Init();
+  MX_CAN_Init();
   MX_SPI2_Init();
-  MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
-//	HAL_TIM_PWM_Start(&htim5,TIM_CHANNEL_1);
-//	HAL_TIM_PWM_Start(&htim5,TIM_CHANNEL_2);
-//	HAL_TIM_PWM_Start(&htim5,TIM_CHANNEL_3);
-//	HAL_TIM_PWM_Start(&htim10,TIM_CHANNEL_1);
-	holed.Init();
-	hled.Init();
-	NRF24L01_Init();
-	CanFilterInit(&hcan1);  
-
+  SetCanFliter();
   /* USER CODE END 2 */
+  /* Init scheduler */
+  osKernelInitialize();
+ 
+  /* Call init function for freertos objects (in freertos.c) */
+  MX_FREERTOS_Init(); 
+ 
+  /* Start scheduler */
+  osKernelStart();
+ 
+  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//		HAL_GPIO_TogglePin(GPIOE,GPIO_PIN_2);
-//		HAL_Delay(200);
-//		HAL_GPIO_TogglePin(GPIOE,GPIO_PIN_3);
-//		HAL_Delay(20);
-//		HAL_GPIO_TogglePin(GPIOE,GPIO_PIN_4);
-//		HAL_Delay(20);
-//		HAL_GPIO_TogglePin(GPIOE,GPIO_PIN_5);
-//		HAL_Delay(20);
-//		HAL_GPIO_TogglePin(GPIOG,GPIO_PIN_4);
-//		HAL_Delay(20);
-//		HAL_GPIO_TogglePin(GPIOG,GPIO_PIN_5);
-//		HAL_Delay(20);
-//		HAL_GPIO_TogglePin(GPIOG,GPIO_PIN_6);
-//		HAL_Delay(20);
-//		HAL_GPIO_TogglePin(GPIOG,GPIO_PIN_7);
-//		HAL_Delay(20); 	
-//		HAL_ADC_Start(&hadc3);
-//		adcvalue=HAL_ADC_GetValue(&hadc3);
-//		printf("adc:%d\n",adcvalue);
-//		holed.Draw.BMP(bmp1);
-			
-
-		FourWheelVellControl(	2500,
-												0,
-												0);
-		Calculate();
-		SendMotor();
-		CanDataReceive(CAN_CHASSIS_MOTOR1_ID);
-		CanDataReceive(CAN_CHASSIS_MOTOR2_ID);
-		CanDataReceive(CAN_CHASSIS_MOTOR3_ID);
-		CanDataReceive(CAN_CHASSIS_MOTOR4_ID);
-//		 hled.Doing();
-//		 while(NRF24L01_Recieve(rxbuff)!=STATUS_RX_OK);
-//		 printf("%d %d %d\n",rxbuff[0],(int)(rxbuff[1]),(int)(rxbuff[2]));
-//		 holed.Set.Refresh();
-
-		printf(" WTR_board-2.0 \n");
-		printf("remote:%s",hnrf24l01.status!=NRF24L01_STATUS_DISCONNECT?"false":"true");
-		printf("\nlinear:");
-		printf("\nangular:");
-		holed.Set.Refresh();
-		holed.Draw.Clear();
-		HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -188,20 +170,15 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage 
-  */
-  __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
   /** Initializes the CPU, AHB and APB busses clocks 
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 168;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -212,10 +189,10 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -226,14 +203,36 @@ void SystemClock_Config(void)
 /* USER CODE END 4 */
 
 /**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM4 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM4) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
+
+/**
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
+  while(1);
   /* User can add his own implementation to report the HAL error return state */
-	while(1);
+
   /* USER CODE END Error_Handler_Debug */
 }
 

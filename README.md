@@ -8,5 +8,5 @@
 
 for more:
 
-1. [ic datasheet note](./note/EEPROMdatasheet解读.pdf)
-2. [application guide](./note/AT24CXXX系列EEPROM驱动.pdf)
+1. [备忘录](./note/备忘录.txt)
+2. [模型备份](./note/模型备份.txt)

@@ -1,0 +1,16 @@
+vectorchassis_rtos\support.o: ..\user_os\support.c
+vectorchassis_rtos\support.o: ..\user_os\support.h
+vectorchassis_rtos\support.o: ..\User_lib\WTRconfig.h
+vectorchassis_rtos\support.o: ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h
+vectorchassis_rtos\support.o: ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h
+vectorchassis_rtos\support.o: D:\Software\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+vectorchassis_rtos\support.o: D:\Software\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
+vectorchassis_rtos\support.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
+vectorchassis_rtos\support.o: ../Inc/FreeRTOSConfig.h
+vectorchassis_rtos\support.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h
+vectorchassis_rtos\support.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h
+vectorchassis_rtos\support.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h
+vectorchassis_rtos\support.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3/portmacro.h
+vectorchassis_rtos\support.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
+vectorchassis_rtos\support.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h
+vectorchassis_rtos\support.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h
